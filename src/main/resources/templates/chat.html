@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>ChatBot IA</title>
+    <link rel="stylesheet" th:href="@{/style.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+<div class="chat-container">
+    <header class="chat-header">
+        <h2><i class="fas fa-robot"></i> ChatBot IA</h2>
+    </header>
+    <main class="chat-body" id="chat-body"></main>
+    <footer class="chat-footer">
+        <form id="chat-form">
+            <!-- Bouton image -->
+            <label for="image-upload" class="icon-button">
+                <i class="fas fa-image"></i>
+                <input type="file" id="image-upload" accept="image/*" style="display: none;" />
+            </label>
+            <!-- Champ texte -->
+            <input type="text" id="chat-input" placeholder="Écrivez votre message..." autocomplete="off" />
+            <!-- Microphone -->
+            <button type="button" id="voice-button" class="icon-button"><i class="fas fa-microphone"></i></button>
+            <!-- Envoi -->
+            <button type="submit" id="send-button"><i class="fas fa-paper-plane"></i></button>
+        </form>
+    </footer>
+</div>
+
+<!-- Script principal -->
+<script th:inline="javascript">
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('chat-input');
+    const chatBody = document.getElementById('chat-body');
+    const voiceBtn = document.getElementById('voice-button');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const userMessage = input.value.trim();
+        if (!userMessage) return;
+
+        addMessage("user", userMessage);
+        input.value = '';
+
+        try {
+            const response = await fetch(/chat?query=${encodeURIComponent(userMessage)});
+            const data = await response.text();
+            addMessage("bot", data);
+        } catch (error) {
+            addMessage("error", "Erreur de communication.");
+        }
+    });
+
+    function addMessage(sender, message) {
+        const messageDiv = document.createElement("div");
+        messageDiv.className = message ${sender};
+        messageDiv.innerHTML = <span>${message}</span>;
+        chatBody.appendChild(messageDiv);
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    // Reconnaissance vocale
+    if ('webkitSpeechRecognition' in window) {
+        const recognition = new webkitSpeechRecognition();
+        recognition.lang = 'fr-FR';
+        recognition.continuous = false;
+
+        voiceBtn.addEventListener('click', () => {
+            recognition.start();
+        });
+
+        recognition.onresult = (event) => {
+            input.value = event.results[0][0].transcript;
+        };
+    } else {
+        voiceBtn.style.display = 'none';
+    }
+</script>
+</body>
+</html>
